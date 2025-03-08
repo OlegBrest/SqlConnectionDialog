@@ -26,6 +26,8 @@ namespace SqlConnectionDialog.ViewModel
             {
                 _sqlConnectionStringBuilder = value;
                 onPropertyChanged(nameof(sqlConnectionStringBuilder));
+                onPropertyChanged();
+                UpdateAllSQL();
             }
         }
         #region SQL_properties
@@ -69,37 +71,7 @@ namespace SqlConnectionDialog.ViewModel
                     sqlConnectionStringBuilder.ConnectionString = value;
                 }
                 catch { }
-                onPropertyChanged(nameof(ConnectionString));
-                onPropertyChanged(nameof(ApplicationIntent));
-                onPropertyChanged(nameof(ApplicationName));
-                onPropertyChanged(nameof(AttachDBFilename));
-                onPropertyChanged(nameof(ConnectRetryCount));
-                onPropertyChanged(nameof(ConnectRetryInterval));
-                onPropertyChanged(nameof(ConnectTimeout));
-                onPropertyChanged(nameof(CurrentLanguage));
-                onPropertyChanged(nameof(DataSource));
-                onPropertyChanged(nameof(Encrypt));
-                onPropertyChanged(nameof(Enlist));
-                onPropertyChanged(nameof(FailoverPartner));
-                onPropertyChanged(nameof(InitialCatalog));
-                onPropertyChanged(nameof(IntegratedSecurity));
-                onPropertyChanged(nameof(LoadBalanceTimeout));
-                onPropertyChanged(nameof(MaxPoolSize));
-                onPropertyChanged(nameof(MinPoolSize));
-                onPropertyChanged(nameof(MultipleActiveResultSets));
-                onPropertyChanged(nameof(MultiSubnetFailover));
-                onPropertyChanged(nameof(PacketSize));
-                onPropertyChanged(nameof(Password));
-                onPropertyChanged(nameof(PersistSecurityInfo));
-                onPropertyChanged(nameof(PoolBlockingPeriod));
-                onPropertyChanged(nameof(Pooling));
-                onPropertyChanged(nameof(Replication));
-                onPropertyChanged(nameof(TransactionBinding));
-                onPropertyChanged(nameof(TrustServerCertificate));
-                onPropertyChanged(nameof(TypeSystemVersion));
-                onPropertyChanged(nameof(UserID));
-                onPropertyChanged(nameof(UserInstance));
-                onPropertyChanged(nameof(WorkstationID));
+                UpdateAllSQL();
             }
         }
         public int ConnectRetryCount
@@ -409,6 +381,41 @@ namespace SqlConnectionDialog.ViewModel
         }
 
         #endregion
+
+        private void UpdateAllSQL()
+        {
+            onPropertyChanged(nameof(ConnectionString));
+            onPropertyChanged(nameof(ApplicationIntent));
+            onPropertyChanged(nameof(ApplicationName));
+            onPropertyChanged(nameof(AttachDBFilename));
+            onPropertyChanged(nameof(ConnectRetryCount));
+            onPropertyChanged(nameof(ConnectRetryInterval));
+            onPropertyChanged(nameof(ConnectTimeout));
+            onPropertyChanged(nameof(CurrentLanguage));
+            onPropertyChanged(nameof(DataSource));
+            onPropertyChanged(nameof(Encrypt));
+            onPropertyChanged(nameof(Enlist));
+            onPropertyChanged(nameof(FailoverPartner));
+            onPropertyChanged(nameof(InitialCatalog));
+            onPropertyChanged(nameof(IntegratedSecurity));
+            onPropertyChanged(nameof(LoadBalanceTimeout));
+            onPropertyChanged(nameof(MaxPoolSize));
+            onPropertyChanged(nameof(MinPoolSize));
+            onPropertyChanged(nameof(MultipleActiveResultSets));
+            onPropertyChanged(nameof(MultiSubnetFailover));
+            onPropertyChanged(nameof(PacketSize));
+            onPropertyChanged(nameof(Password));
+            onPropertyChanged(nameof(PersistSecurityInfo));
+            onPropertyChanged(nameof(PoolBlockingPeriod));
+            onPropertyChanged(nameof(Pooling));
+            onPropertyChanged(nameof(Replication));
+            onPropertyChanged(nameof(TransactionBinding));
+            onPropertyChanged(nameof(TrustServerCertificate));
+            onPropertyChanged(nameof(TypeSystemVersion));
+            onPropertyChanged(nameof(UserID));
+            onPropertyChanged(nameof(UserInstance));
+            onPropertyChanged(nameof(WorkstationID));
+        }
 
         private DelegateCommand _testConnection;
         public ICommand testConnection => _testConnection ??= new DelegateCommand(PerformtestConnection);
