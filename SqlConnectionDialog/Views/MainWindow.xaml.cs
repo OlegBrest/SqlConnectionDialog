@@ -59,5 +59,6 @@ namespace SqlConnectionDialog.Views
         {
             e.Handled = TextBoxValidator.DoubleNumberValidationTextBox(sender, e);
         }
+
     }
 }

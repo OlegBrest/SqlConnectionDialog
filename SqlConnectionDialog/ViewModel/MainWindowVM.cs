@@ -1,7 +1,9 @@
 ﻿using SqlConnectionDialog.Utils;
+using SqlConnectionDialog.Views;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -18,8 +20,8 @@ namespace SqlConnectionDialog.ViewModel
 {
     public class MainWindowVM : NotifyUIBase
     {
-        private System.Data.SqlClient.SqlConnectionStringBuilder _sqlConnectionStringBuilder = new System.Data.SqlClient.SqlConnectionStringBuilder();
-        public System.Data.SqlClient.SqlConnectionStringBuilder sqlConnectionStringBuilder
+        private SqlConnectionStringBuilder _sqlConnectionStringBuilder = new SqlConnectionStringBuilder();
+        public SqlConnectionStringBuilder sqlConnectionStringBuilder
         {
             get => _sqlConnectionStringBuilder;
             set
@@ -31,7 +33,7 @@ namespace SqlConnectionDialog.ViewModel
             }
         }
         #region SQL_properties
-        public System.Data.SqlClient.ApplicationIntent ApplicationIntent
+        public ApplicationIntent ApplicationIntent
         {
             get => _sqlConnectionStringBuilder.ApplicationIntent;
             set
@@ -180,7 +182,7 @@ namespace SqlConnectionDialog.ViewModel
         { get => sqlConnectionStringBuilder.IsFixedSize; }
         public bool IsReadOnly
         { get => sqlConnectionStringBuilder.IsReadOnly; }
-        public System.Collections.ICollection Keys
+        public ICollection Keys
         { get => sqlConnectionStringBuilder.Keys; }
         public int LoadBalanceTimeout
         {
@@ -262,7 +264,7 @@ namespace SqlConnectionDialog.ViewModel
                 onPropertyChanged(nameof(ConnectionString));
             }
         }
-        public System.Data.SqlClient.PoolBlockingPeriod PoolBlockingPeriod
+        public PoolBlockingPeriod PoolBlockingPeriod
         {
             get => sqlConnectionStringBuilder.PoolBlockingPeriod;
             set
@@ -342,7 +344,7 @@ namespace SqlConnectionDialog.ViewModel
                 onPropertyChanged(nameof(ConnectionString));
             }
         }
-        public System.Collections.ICollection Values
+        public ICollection Values
         { get => sqlConnectionStringBuilder.Values; }
         public string WorkstationID
         {
@@ -364,7 +366,7 @@ namespace SqlConnectionDialog.ViewModel
             get => _testResult;
             set
             {
-                _testResult =string.Format("Status:{0}", value);
+                _testResult = string.Format("Status:{0}", value);
                 onPropertyChanged(nameof(testResult));
             }
         }
@@ -380,6 +382,16 @@ namespace SqlConnectionDialog.ViewModel
             }
         }
 
+        private bool _connectAvailible = false;
+        public bool connectAvailible
+        {
+            get => _connectAvailible;
+            set
+            {
+                _connectAvailible = value;
+                onPropertyChanged(nameof(connectAvailible));
+            }
+        }
         #endregion
 
         private void UpdateAllSQL()
@@ -427,36 +439,56 @@ namespace SqlConnectionDialog.ViewModel
                 try
                 {
                     testConn.Open();
-                    if (testConn.State == System.Data.ConnectionState.Open)
+                    if (testConn.State == ConnectionState.Open)
                     {
                         testResult = "Ok";
+                        connectAvailible = true;
                         DataTable sqlSchema = testConn.GetSchema("Databases");
                         ListTables(sqlSchema);
                     }
-                    else if (testConn.State == System.Data.ConnectionState.Broken)
+                    else if (testConn.State == ConnectionState.Broken)
                     {
                         testResult = "Broken";
+                        connectAvailible = false;
                     }
-                    else if (testConn.State == System.Data.ConnectionState.Connecting)
+                    else if (testConn.State == ConnectionState.Connecting)
                     {
                         testResult = "Connecting";
                     }
                     else
                     {
                         testResult = "No connection";
+                        connectAvailible = false;
                     }
                 }
                 catch (Exception ex)
                 {
                     testResult = ex.Message;
-                    dbLists=new List<string>();
+                    bool noDBfinded = false;
+                    if (ex.Data.Count>3)
+                    {
+                        string [] vars = new string[ex.Data.Count];
+                        ex.Data.Values.CopyTo(vars, 0);
+                        if (vars[2] == "4060")
+                            noDBfinded=true;
+                    }
+                    if (ex.Message.Contains("Не удается открыть базу данных") || noDBfinded)
+                    {
+                        NameDbWindow nameDbWindow = new NameDbWindow(InitialCatalog);
+                        if (nameDbWindow.ShowDialog() == true)
+                        {
+                            AddDBFunc(nameDbWindow.DBName);
+                            testResult = "Added DB " + nameDbWindow.DBName + ". Test again and select needed DB";
+                        }
+                    }
+                    dbLists = new List<string>();
                 }
             }
         }
 
         public void ListTables(DataTable dt)
         {
-            List<string>  tempdbLists = new List<string>();
+            List<string> tempdbLists = new List<string>();
             GC.Collect();
             foreach (DataRow row in dt.Rows)
             {
@@ -465,6 +497,41 @@ namespace SqlConnectionDialog.ViewModel
             }
             dbLists = tempdbLists;
             //onPropertyChanged(nameof(dbLists));
+        }
+
+        private DelegateCommand addDB;
+        public ICommand AddDB => addDB ??= new DelegateCommand(PerformAddDB);
+
+        private void PerformAddDB(object commandParameter)
+        {
+            NameDbWindow nameDbWindow = new NameDbWindow("");
+            if (nameDbWindow.ShowDialog()==true)
+            {
+                AddDBFunc(nameDbWindow.DBName);
+            }
+        }
+        private void AddDBFunc(string addedDB)
+        {
+            if (addedDB != string.Empty)
+            {
+                InitialCatalog = "";
+                using (SqlConnection testConn = new SqlConnection(ConnectionString))
+                {
+                    try
+                    {
+                        testConn.Open();
+                        string sql = "CREATE DATABASE " + addedDB;
+                        SqlCommand cmd = testConn.CreateCommand();
+                        cmd.CommandText = sql;
+                        cmd.ExecuteNonQuery();
+                        testConn.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        testResult = ex.Message;
+                    }
+                }
+            }
         }
     }
 }
